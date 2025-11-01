@@ -1,6 +1,7 @@
 # OC Provider Backend — Knowledge Base
 
 ## 🎯 Purpose
+
 The **Provider Backend** is the core API and data layer for content providers.  
 It manages document creation, updates, and publication toward the **Client Backend**.  
 The goal is to keep this service fully independent so that providers can continue working even if client services are overloaded or offline.
@@ -9,13 +10,13 @@ The goal is to keep this service fully independent so that providers can continu
 
 ## 🧩 Key Components
 
-| Component | Description |
-|------------|--------------|
-| **NestJS Application** | Main backend framework providing REST APIs. |
+| Component                                | Description                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------- |
+| **NestJS Application**                   | Main backend framework providing REST APIs.                                     |
 | **PostgreSQL Database (oc-provider-pg)** | Stores provider-created documents and metadata. Runs inside the same namespace. |
-| **Document Module** | CRUD operations for documents. |
-| **Transfer Module** | Sends completed documents to the Client Backend and handles responses. |
-| **Security Module** | Authentication and authorization (to be implemented later). |
+| **Document Module**                      | CRUD operations for documents.                                                  |
+| **Transfer Module**                      | Sends completed documents to the Client Backend and handles responses.          |
+| **Security Module**                      | Authentication and authorization (to be implemented later).                     |
 
 ---
 
@@ -50,7 +51,7 @@ The goal is to keep this service fully independent so that providers can continu
 - **Language:** Node.js (NestJS)
 - **Image:** `ghcr.io/<username>/oc-provider-backend`
 - **Namespace:** `oc-provider`
-- **Secrets:**  
+- **Secrets:**
   - `DATABASE_URL` injected from Kubernetes secret
 - **Exposed Service:** `oc-provider-backend:80`
 - **Ingress:** `/api` → backend

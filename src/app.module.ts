@@ -14,14 +14,14 @@ import { ClientBackendService } from './infrastructure/http/client-backend.servi
   providers: [
     // Application Services
     AppService,
-    
+
     // Use Cases
     CreateDocumentUseCase,
     TransferDocumentUseCase,
-    
+
     // Domain Services
     DocumentDomainService,
-    
+
     // Infrastructure Services
     {
       provide: 'DocumentRepository',

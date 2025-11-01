@@ -9,12 +9,13 @@ export interface ClientBackendResponse {
 export class ClientBackendService {
   private readonly clientBackendUrl = 'https://api.client.on-track.ch/v1';
 
-  async sendDocument(document: Document): Promise<ClientBackendResponse> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async sendDocument(_document: Document): Promise<ClientBackendResponse> {
     // TODO: Implement actual HTTP client call
     // For now, simulate the response
-    return {
+    return Promise.resolve({
       accessCode: this.generateMockAccessCode(),
-    };
+    });
   }
 
   private generateMockAccessCode(): string {

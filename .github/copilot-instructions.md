@@ -1,9 +1,11 @@
 # OC Provider Backend - AI Coding Instructions
 
 ## Project Overview
+
 This is a NestJS backend service that serves as the core API for content providers in the OC (On-Track) platform. It manages document creation, updates, and publication, designed to operate independently from client services for resilience.
 
 ## Clean Architecture Structure
+
 ```
 src/
 ├── domain/           # Business logic core (entities, repository interfaces)
@@ -27,6 +29,7 @@ unit-tests/          # Boston-style unit tests (separate from src)
 ```
 
 ## Development Workflow
+
 ```bash
 # Start development server
 npm run start:dev
@@ -38,24 +41,32 @@ npm run test:cov    # coverage reports to ../coverage
 
 # Linting uses flat config (eslint.config.mjs), not legacy .eslintrc
 npm run lint
+
+# Code formatting automatically applied on save (configured in .vscode/settings.json)
+npm run format       # Manual format all files
+npm run format:check # Check if files are formatted correctly
 ```
 
 ## Project-Specific Conventions
 
 ### Clean Architecture Guidelines
+
 - **Domain Layer**: Pure business logic, no external dependencies
 - **Application Layer**: Orchestrates domain objects, depends only on domain interfaces
 - **Infrastructure Layer**: Implements domain interfaces, handles external concerns
 - **Presentation Layer**: HTTP handling, request/response transformation
 
 ### Boston-Style Testing
+
 - Tests in separate `unit-tests/` directory (not alongside source)
 - Use `*.test.ts` naming convention (not `*.spec.ts`)
 - Structure: `describe` → `context` → `it` with Given/When/Then comments
 - Mock all dependencies, test behavior not implementation
 
 ### Commit Messages
+
 Use conventional commits with Clean Architecture scope:
+
 ```
 feat(domain): Add document expiration logic to DocumentEntity
 fix(application): Prevent duplicate access codes in CreateDocumentUseCase
@@ -64,18 +75,21 @@ feat(presentation): Add validation middleware for document endpoints
 ```
 
 ### TypeScript Configuration
+
 - Uses `nodenext` module resolution with package.json exports
 - Decorators enabled for NestJS (`experimentalDecorators: true`)
 - Path mapping: `@/` points to `src/` (configured in Jest)
 - Relaxed strictness: `noImplicitAny: false`, `strictBindCallApply: false`
 
 ### Dependency Flow Rules
+
 - Domain depends on nothing external
 - Application depends only on domain interfaces
 - Infrastructure implements domain interfaces
 - Presentation depends on application use cases
 
 ## Key Files for Context
+
 - `KNOWLEDGE_BASE.md` - Business logic and component interactions
 - `unit-tests/setup.ts` - Jest setup for Boston-style testing
 - `src/domain/entities/` - Core business entities with behavior
@@ -83,6 +97,7 @@ feat(presentation): Add validation middleware for document endpoints
 - `dockerfile` - Production-ready multi-stage build
 
 ## When Adding Features
+
 1. **Start with Domain**: Define entities and repository interfaces first
 2. **Create Use Cases**: Implement business logic in application layer
 3. **Add Infrastructure**: Implement repository interfaces for data persistence

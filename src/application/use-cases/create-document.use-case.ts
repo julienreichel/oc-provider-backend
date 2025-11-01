@@ -25,7 +25,7 @@ export class CreateDocumentUseCase {
 
     // Create new document entity
     const document = new Document(
-      uuidv4() as string,
+      uuidv4(),
       request.title,
       request.content,
       request.providerId,
