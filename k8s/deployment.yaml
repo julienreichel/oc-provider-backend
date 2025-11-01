@@ -13,6 +13,8 @@ spec:
       labels:
         app: oc-provider-backend
     spec:
+      imagePullSecrets:
+        - name: ghcr-creds
       containers:
         - name: app
           image: IMAGE_PLACEHOLDER
