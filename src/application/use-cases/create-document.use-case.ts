@@ -9,7 +9,7 @@ import {
   CreateDocumentRequest,
   DocumentResponse,
 } from '../ports/document.port';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CreateDocumentUseCase {
@@ -25,7 +25,7 @@ export class CreateDocumentUseCase {
 
     // Create new document entity
     const document = new Document(
-      uuidv4(),
+      randomUUID(),
       request.title,
       request.content,
       request.providerId,
