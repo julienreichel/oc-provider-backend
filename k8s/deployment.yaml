@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: oc-provider-backend
-  namespace: oc-provider
 spec:
   replicas: 1
   selector:
