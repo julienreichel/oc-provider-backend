@@ -7,6 +7,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     uses: julienreichel/oc-infra/.github/workflows/reusable-build.yml@main
     with:
       image_name: ghcr.io/julienreichel/oc-provider-backend
