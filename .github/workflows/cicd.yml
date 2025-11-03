@@ -9,7 +9,7 @@ jobs:
   build:
     uses: julienreichel/oc-infra/.github/workflows/reusable-build.yml@main
     with:
-      image_name: ghcr.io/oc-provider-backend
+      image_name: ghcr.io/julienreichel/oc-provider-backend
     secrets: inherit
 
   deploy-prod:
@@ -17,7 +17,7 @@ jobs:
     uses: julienreichel/oc-infra/.github/workflows/reusable-deploy.yml@main
     with:
       app_kind: backend
-      image_name: ghcr.io/oc-provider-backend
+      image_name: ghcr.io/julienreichel/oc-provider-backend
       namespace: oc-provider
     secrets: inherit
 
@@ -26,6 +26,6 @@ jobs:
     uses: julienreichel/oc-infra/.github/workflows/reusable-deploy.yml@main
     with:
       app_kind: backend
-      image_name: ghcr.io/oc-provider-backend
+      image_name: ghcr.io/julienreichel/oc-provider-backend
       namespace: oc-dev-provider
     secrets: inherit
