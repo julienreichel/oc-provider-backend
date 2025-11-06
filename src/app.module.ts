@@ -1,33 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './presentation/controllers/app.controller';
-import { DocumentController } from './presentation/controllers/document.controller';
-import { AppService } from './application/app.service';
-import { CreateDocumentUseCase } from './application/use-cases/create-document.use-case';
-import { TransferDocumentUseCase } from './application/use-cases/transfer-document.use-case';
-import { DocumentDomainService } from './domain/services/document-domain.service';
-import { InMemoryDocumentRepository } from './infrastructure/database/in-memory-document.repository';
-import { ClientBackendService } from './infrastructure/http/client-backend.service';
+import { AppService } from './app.service';
+import { HealthController } from './adapters/http/health.controller';
+import { DocumentController } from './adapters/http/document.controller';
+import { PersistenceModule } from './infrastructure/persistence.module';
+import { ServicesModule } from './infrastructure/services.module';
+import { ConfigModule } from './config/config.module';
+import { CreateDocumentUseCase } from './application/use-cases/create-document';
+import type { DocumentRepository } from './domain/entities/repositories/document-repository';
+import type { Clock } from './domain/services/clock';
+import type { IdGenerator } from './domain/services/id-generator';
 
 @Module({
-  imports: [],
-  controllers: [AppController, DocumentController],
+  imports: [ConfigModule, PersistenceModule, ServicesModule],
+  controllers: [HealthController, DocumentController],
   providers: [
-    // Application Services
     AppService,
-
-    // Use Cases
-    CreateDocumentUseCase,
-    TransferDocumentUseCase,
-
-    // Domain Services
-    DocumentDomainService,
-
-    // Infrastructure Services
     {
-      provide: 'DocumentRepository',
-      useClass: InMemoryDocumentRepository,
+      provide: CreateDocumentUseCase,
+      useFactory: (
+        documentRepository: DocumentRepository,
+        clock: Clock,
+        idGenerator: IdGenerator,
+      ) => new CreateDocumentUseCase(documentRepository, clock, idGenerator),
+      inject: ['DocumentRepository', 'Clock', 'IdGenerator'],
     },
-    ClientBackendService,
   ],
 })
 export class AppModule {}

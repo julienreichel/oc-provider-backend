@@ -2,8 +2,8 @@
 
 ## 🎯 Purpose
 
-The **Provider Backend** is the core API and data layer for content providers.  
-It manages document creation, updates, and publication toward the **Client Backend**.  
+The **Provider Backend** is the core API and data layer for content providers.
+It manages document creation, updates, and publication toward the **Client Backend**.
 The goal is to keep this service fully independent so that providers can continue working even if client services are overloaded or offline.
 
 ---
@@ -32,7 +32,7 @@ The goal is to keep this service fully independent so that providers can continu
 - **With Client Backend (`oc-client-backend`)**
   - When a provider sends a document, this backend calls:
     ```http
-    POST https://api.client.on-track.ch/v1/documents
+    POST https://client.on-track.ch/api/v1/documents
     ```
   - The Client Backend replies with a unique code:
     ```json
