@@ -52,6 +52,28 @@ describe('HttpClientGateway', () => {
     expect(result.accessCode).toBe('CODE-123');
   });
 
+  it('preserves base path segments when building endpoint', async () => {
+    configService.client.baseUrl = 'https://client.example.com/api/';
+    httpService.post.mockReturnValue(
+      of({
+        data: { accessCode: 'CODE-456' },
+      } as any),
+    );
+
+    const result = await gateway.sendDocument({
+      id: 'doc-1',
+      title: 'Title',
+      content: 'Content',
+    });
+
+    expect(httpService.post).toHaveBeenCalledWith(
+      'https://client.example.com/api/v1/documents',
+      expect.any(Object),
+      expect.any(Object),
+    );
+    expect(result.accessCode).toBe('CODE-456');
+  });
+
   it('throws ExternalServiceError when response is invalid', async () => {
     httpService.post.mockReturnValue(of({ data: {} } as any));
 

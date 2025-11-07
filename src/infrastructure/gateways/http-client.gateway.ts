@@ -29,7 +29,8 @@ export class HttpClientGateway implements ClientGateway {
       );
     }
 
-    const endpoint = new URL('/v1/documents', baseUrl).toString();
+    const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const endpoint = new URL('v1/documents', normalizedBase).toString();
 
     try {
       const response = await firstValueFrom(

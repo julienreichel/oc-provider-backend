@@ -47,6 +47,7 @@ The `.env.test.example` template contains configuration matching oc-infra setup:
 
 ```
 DATABASE_URL="postgresql://app:StrongLocalPass@localhost:5433/db?schema=public"
+CLIENT_BASE_URL="https://client.localhost/api/"
 ```
 
 ### Commands
@@ -67,7 +68,17 @@ npm run test:cov          # Coverage report
 
 ### Production
 
-Production deployments use Kubernetes secrets (`envFrom: secretRef: name: db`).
+Production deployments use Kubernetes secrets (`envFrom: secretRef: name: db`) plus the `CLIENT_BASE_URL` environment variable set via CI (dev cluster: `https://dev.client.on-track.ch/api/`, prod cluster: `https://client.on-track.ch/api/`).
+
+### Client Backend Integration
+
+The provider backend registers finalized documents with the client backend. Configure `CLIENT_BASE_URL` as follows:
+
+- Local/dev machines: `https://client.localhost/api/` (already present in `.env.test.example`)
+- Dev cluster: `https://dev.client.on-track.ch/api/`
+- Production cluster: `https://client.on-track.ch/api/`
+
+CI/CD pipelines should replace the `CLIENT_BASE_URL_PLACEHOLDER` value in `k8s/deployment.yaml` with the environment-specific URL when deploying.
 
 ## Development
 
