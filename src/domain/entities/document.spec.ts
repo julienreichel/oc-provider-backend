@@ -20,7 +20,7 @@ describe('Document', () => {
     expect(document.accessCode).toBeNull();
   });
 
-  it('finalizes document and stores normalized access code', () => {
+  it('finalizes document without assigning access code', () => {
     const document = new Document(
       baseProps.id,
       baseProps.title,
@@ -28,10 +28,10 @@ describe('Document', () => {
       baseProps.createdAt,
     );
 
-    document.finalize('  FINAL-123  ');
+    document.finalize();
 
     expect(document.status).toBe('final');
-    expect(document.accessCode).toBe('FINAL-123');
+    expect(document.accessCode).toBeNull();
   });
 
   it('throws when attempting to finalize with empty content', () => {
@@ -43,35 +43,9 @@ describe('Document', () => {
     );
     (document as unknown as { content: string }).content = '   ';
 
-    expect(() => document.finalize('CODE-123')).toThrow(
+    expect(() => document.finalize()).toThrow(
       'Document content cannot be empty',
     );
-  });
-
-  it('throws when attempting to finalize with empty access code', () => {
-    const document = new Document(
-      baseProps.id,
-      baseProps.title,
-      baseProps.content,
-      baseProps.createdAt,
-    );
-
-    expect(() => document.finalize('   ')).toThrow(
-      'Access code cannot be empty',
-    );
-  });
-
-  it('throws when rehydrated as final without access code', () => {
-    expect(
-      () =>
-        new Document(
-          baseProps.id,
-          baseProps.title,
-          baseProps.content,
-          baseProps.createdAt,
-          'final',
-        ),
-    ).toThrow('Finalized documents require an access code');
   });
 
   it('throws when access code is set while status is draft', () => {
@@ -88,6 +62,62 @@ describe('Document', () => {
     ).toThrow('Access code can only be set when document is final');
   });
 
+  it('assigns access code when document is final', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+      'final',
+    );
+
+    document.assignAccessCode('  CODE-123  ');
+
+    expect(document.accessCode).toBe('CODE-123');
+  });
+
+  it('allows rehydrating finalized document without access code', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+      'final',
+      null,
+    );
+
+    expect(document.status).toBe('final');
+    expect(document.accessCode).toBeNull();
+  });
+
+  it('throws when assigning empty access code', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+      'final',
+    );
+
+    expect(() => document.assignAccessCode('   ')).toThrow(
+      'Access code cannot be empty',
+    );
+  });
+
+  it('throws when assigning access code on draft document', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+      'draft',
+    );
+
+    expect(() => document.assignAccessCode('CODE-123')).toThrow(
+      'Access code can only be assigned to finalized documents',
+    );
+  });
+
   it('throws when attempting to finalize an already final document', () => {
     const document = new Document(
       baseProps.id,
@@ -95,10 +125,8 @@ describe('Document', () => {
       baseProps.content,
       baseProps.createdAt,
     );
-    document.finalize('CODE-123');
+    document.finalize();
 
-    expect(() => document.finalize('CODE-456')).toThrow(
-      'Document is already finalized',
-    );
+    expect(() => document.finalize()).toThrow('Document is already finalized');
   });
 });

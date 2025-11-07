@@ -3,10 +3,13 @@ import { AppConfig } from './app-config';
 describe('AppConfig', () => {
   describe('when NODE_ENV is production', () => {
     let originalEnv: string | undefined;
+    let originalClient: string | undefined;
 
     beforeEach(() => {
       originalEnv = process.env.NODE_ENV;
+      originalClient = process.env.CLIENT_BASE_URL;
       process.env.NODE_ENV = 'production';
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
     });
 
     afterEach(() => {
@@ -15,11 +18,17 @@ describe('AppConfig', () => {
       } else {
         delete process.env.NODE_ENV;
       }
+      if (originalClient !== undefined) {
+        process.env.CLIENT_BASE_URL = originalClient;
+      } else {
+        delete process.env.CLIENT_BASE_URL;
+      }
     });
 
     it('should require DATABASE_URL in production', () => {
       // Given
       delete process.env.DATABASE_URL;
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
       const config = new AppConfig();
 
       // When
@@ -32,9 +41,23 @@ describe('AppConfig', () => {
       );
     });
 
-    it('should pass validation with valid DATABASE_URL', () => {
+    it('should require CLIENT_BASE_URL in production', () => {
+      delete process.env.CLIENT_BASE_URL;
+      process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5433/db';
+      const config = new AppConfig();
+
+      const result = config.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'CLIENT_BASE_URL is required in production environment',
+      );
+    });
+
+    it('should pass validation with valid DATABASE_URL and CLIENT_BASE_URL', () => {
       // Given
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5433/db';
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
       const config = new AppConfig();
 
       // When
@@ -45,11 +68,13 @@ describe('AppConfig', () => {
       expect(result.errors).toHaveLength(0);
       expect(config.hasDatabase()).toBe(true);
       expect(config.isProduction()).toBe(true);
+      expect(config.hasClientBaseUrl()).toBe(true);
     });
 
     it('should reject invalid DATABASE_URL format', () => {
       // Given
       process.env.DATABASE_URL = 'invalid-url';
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
       const config = new AppConfig();
 
       // When
@@ -61,6 +86,19 @@ describe('AppConfig', () => {
         'DATABASE_URL must be a valid PostgreSQL connection string',
       );
     });
+
+    it('should reject invalid CLIENT_BASE_URL format', () => {
+      process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5433/db';
+      process.env.CLIENT_BASE_URL = 'ftp://invalid';
+      const config = new AppConfig();
+
+      const result = config.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'CLIENT_BASE_URL must be a valid HTTP(S) url',
+      );
+    });
   });
 
   describe('when NODE_ENV is development', () => {
@@ -69,6 +107,7 @@ describe('AppConfig', () => {
     beforeEach(() => {
       originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
+      delete process.env.CLIENT_BASE_URL;
     });
 
     afterEach(() => {
@@ -77,6 +116,7 @@ describe('AppConfig', () => {
       } else {
         delete process.env.NODE_ENV;
       }
+      delete process.env.CLIENT_BASE_URL;
     });
 
     it('should allow missing DATABASE_URL in development', () => {
@@ -115,6 +155,7 @@ describe('AppConfig', () => {
     beforeEach(() => {
       originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
+      delete process.env.CLIENT_BASE_URL;
     });
 
     afterEach(() => {
@@ -123,6 +164,7 @@ describe('AppConfig', () => {
       } else {
         delete process.env.NODE_ENV;
       }
+      delete process.env.CLIENT_BASE_URL;
     });
 
     it('should allow missing DATABASE_URL in test environment', () => {
@@ -148,6 +190,7 @@ describe('AppConfig', () => {
       delete process.env.NODE_ENV;
       delete process.env.PORT;
       delete process.env.DATABASE_URL;
+      delete process.env.CLIENT_BASE_URL;
     });
 
     afterEach(() => {
@@ -162,6 +205,7 @@ describe('AppConfig', () => {
       expect(config.NODE_ENV).toBe('development');
       expect(config.PORT).toBe('3001');
       expect(config.DATABASE_URL).toBeUndefined();
+      expect(config.CLIENT_BASE_URL).toBeUndefined();
       expect(config.isDevelopment()).toBe(true);
       expect(config.isProduction()).toBe(false);
     });

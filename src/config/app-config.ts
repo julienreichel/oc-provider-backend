@@ -7,11 +7,13 @@ export class AppConfig {
   readonly DATABASE_URL?: string;
   readonly NODE_ENV: string;
   readonly PORT: string;
+  readonly CLIENT_BASE_URL?: string;
 
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
     this.PORT = process.env.PORT || '3001';
+    this.CLIENT_BASE_URL = process.env.CLIENT_BASE_URL;
   }
 
   /**
@@ -32,6 +34,14 @@ export class AppConfig {
       errors.push('DATABASE_URL must be a valid PostgreSQL connection string');
     }
 
+    if (this.isProduction() && !this.CLIENT_BASE_URL) {
+      errors.push('CLIENT_BASE_URL is required in production environment');
+    }
+
+    if (this.CLIENT_BASE_URL && !this.isValidHttpUrl(this.CLIENT_BASE_URL)) {
+      errors.push('CLIENT_BASE_URL must be a valid HTTP(S) url');
+    }
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -50,12 +60,25 @@ export class AppConfig {
     return !!this.DATABASE_URL;
   }
 
+  hasClientBaseUrl(): boolean {
+    return !!this.CLIENT_BASE_URL;
+  }
+
   private isValidDatabaseUrl(url: string): boolean {
     try {
       const parsed = new URL(url);
       return (
         parsed.protocol === 'postgresql:' || parsed.protocol === 'postgres:'
       );
+    } catch {
+      return false;
+    }
+  }
+
+  private isValidHttpUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
     } catch {
       return false;
     }

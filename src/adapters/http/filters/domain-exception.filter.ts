@@ -9,15 +9,22 @@ import {
   NotFoundError,
   AccessCodeExpiredError,
   InvalidDocumentStateError,
+  ExternalServiceError,
 } from '../../../domain/errors/errors';
 
-@Catch(NotFoundError, AccessCodeExpiredError, InvalidDocumentStateError)
+@Catch(
+  NotFoundError,
+  AccessCodeExpiredError,
+  InvalidDocumentStateError,
+  ExternalServiceError,
+)
 export class DomainExceptionFilter implements ExceptionFilter {
   catch(
     exception:
       | NotFoundError
       | AccessCodeExpiredError
-      | InvalidDocumentStateError,
+      | InvalidDocumentStateError
+      | ExternalServiceError,
     host: ArgumentsHost,
   ) {
     const ctx = host.switchToHttp();
@@ -35,6 +42,12 @@ export class DomainExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof InvalidDocumentStateError) {
       status = HttpStatus.BAD_REQUEST;
       errorCode = 'INVALID_DOCUMENT_STATE';
+    } else if (exception instanceof ExternalServiceError) {
+      status =
+        typeof exception.statusCode === 'number'
+          ? (exception.statusCode as HttpStatus)
+          : HttpStatus.BAD_GATEWAY;
+      errorCode = 'EXTERNAL_SERVICE_ERROR';
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       errorCode = 'INTERNAL_SERVER_ERROR';

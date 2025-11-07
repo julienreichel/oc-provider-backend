@@ -70,7 +70,8 @@ describeIntegration('PostgreSQLDocumentRepository (Integration)', () => {
         'Final content',
         new Date('2025-01-01T15:00:00.000Z'),
       );
-      document.finalize('CODE-999');
+      document.finalize();
+      document.assignAccessCode('CODE-999');
 
       await repository.save(document);
 

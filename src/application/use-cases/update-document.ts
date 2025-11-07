@@ -33,18 +33,23 @@ export class UpdateDocumentUseCase {
     const nextStatus = input.status ?? document.status;
     let nextAccessCode =
       input.accessCode !== undefined ? input.accessCode : document.accessCode;
+
     if (typeof nextAccessCode === 'string') {
       nextAccessCode = nextAccessCode.trim();
     }
 
-    if (nextStatus === 'draft') {
-      nextAccessCode = null;
+    if (nextAccessCode && nextStatus !== 'final') {
+      throw new InvalidDocumentStateError(
+        'Access code can only be set when document is final',
+      );
     }
 
-    if (nextStatus === 'final' && !nextAccessCode) {
-      throw new InvalidDocumentStateError(
-        'Finalized documents require an access code',
-      );
+    if (typeof nextAccessCode === 'string' && nextAccessCode === '') {
+      throw new InvalidDocumentStateError('Access code cannot be empty');
+    }
+
+    if (nextStatus !== 'final') {
+      nextAccessCode = null;
     }
 
     const updatedDocument = new Document(

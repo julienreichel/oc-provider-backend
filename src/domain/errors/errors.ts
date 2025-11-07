@@ -18,3 +18,13 @@ export class InvalidDocumentStateError extends Error {
     this.name = 'InvalidDocumentStateError';
   }
 }
+
+export class ExternalServiceError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode: number = 502,
+  ) {
+    super(message);
+    this.name = 'ExternalServiceError';
+  }
+}

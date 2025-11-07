@@ -52,14 +52,6 @@ describe('UpdateDocumentUseCase', () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('throws when setting final status without access code', async () => {
-    documentRepository.findById.mockResolvedValue(existingDocument);
-
-    await expect(
-      useCase.execute({ id: 'doc-1', status: 'final' }),
-    ).rejects.toThrow(InvalidDocumentStateError);
-  });
-
   it('allows status change to final with access code', async () => {
     documentRepository.findById.mockResolvedValue(existingDocument);
     documentRepository.save.mockImplementation((doc) => Promise.resolve(doc));
@@ -72,5 +64,30 @@ describe('UpdateDocumentUseCase', () => {
 
     expect(result.status).toBe('final');
     expect(result.accessCode).toBe('CODE-123');
+  });
+
+  it('allows status change to final without access code', async () => {
+    documentRepository.findById.mockResolvedValue(existingDocument);
+    documentRepository.save.mockImplementation((doc) => Promise.resolve(doc));
+
+    const result = await useCase.execute({
+      id: 'doc-1',
+      status: 'final',
+    });
+
+    expect(result.status).toBe('final');
+    expect(result.accessCode).toBeNull();
+  });
+
+  it('throws when providing access code while status is draft', async () => {
+    documentRepository.findById.mockResolvedValue(existingDocument);
+
+    await expect(
+      useCase.execute({
+        id: 'doc-1',
+        status: 'draft',
+        accessCode: 'CODE-123',
+      }),
+    ).rejects.toThrow(InvalidDocumentStateError);
   });
 });

@@ -36,6 +36,12 @@ export class ConfigService {
     };
   }
 
+  get client(): { baseUrl?: string } {
+    return {
+      baseUrl: this.config.CLIENT_BASE_URL,
+    };
+  }
+
   private validateConfig(): void {
     const result: ConfigValidationResult = this.config.validate();
 
@@ -52,6 +58,12 @@ export class ConfigService {
     if (this.config.isDevelopment() && !this.config.hasDatabase()) {
       this.logger.warn(
         'Running in development mode without database - unit tests only',
+      );
+    }
+
+    if (this.config.isDevelopment() && !this.config.hasClientBaseUrl()) {
+      this.logger.warn(
+        'Client backend base URL not configured - send flow will be disabled',
       );
     }
   }

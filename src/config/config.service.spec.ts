@@ -18,6 +18,7 @@ describe('ConfigService', () => {
     beforeEach(async () => {
       process.env.NODE_ENV = 'production';
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5433/db';
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [ConfigService],
@@ -55,6 +56,11 @@ describe('ConfigService', () => {
 
       // Then
       expect(serverConfig.port).toBe('3001');
+    });
+
+    it('should provide client configuration', () => {
+      const clientConfig = service.client;
+      expect(clientConfig.baseUrl).toBe('https://client.example.com');
     });
   });
 
@@ -104,7 +110,7 @@ describe('ConfigService', () => {
           providers: [ConfigService],
         }).compile(),
       ).rejects.toThrow(
-        'Configuration validation failed: DATABASE_URL is required in production environment',
+        'Configuration validation failed: DATABASE_URL is required in production environment, CLIENT_BASE_URL is required in production environment',
       );
 
       loggerErrorSpy.mockRestore();
@@ -114,6 +120,7 @@ describe('ConfigService', () => {
       // Given
       process.env.NODE_ENV = 'production';
       process.env.DATABASE_URL = 'invalid-url';
+      process.env.CLIENT_BASE_URL = 'https://client.example.com';
 
       // Suppress expected error logs during test
       const loggerErrorSpy = jest
@@ -127,6 +134,26 @@ describe('ConfigService', () => {
         }).compile(),
       ).rejects.toThrow(
         'Configuration validation failed: DATABASE_URL must be a valid PostgreSQL connection string',
+      );
+
+      loggerErrorSpy.mockRestore();
+    });
+
+    it('should throw error when CLIENT_BASE_URL format is invalid', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5433/db';
+      process.env.CLIENT_BASE_URL = 'invalid';
+
+      const loggerErrorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+
+      await expect(
+        Test.createTestingModule({
+          providers: [ConfigService],
+        }).compile(),
+      ).rejects.toThrow(
+        'Configuration validation failed: CLIENT_BASE_URL must be a valid HTTP(S) url',
       );
 
       loggerErrorSpy.mockRestore();

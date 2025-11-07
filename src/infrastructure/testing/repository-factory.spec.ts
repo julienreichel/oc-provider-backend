@@ -93,7 +93,8 @@ describe('Repository Factory (Switching)', () => {
             'Content',
             new Date('2025-01-01T12:00:00.000Z'),
           );
-          document.finalize('CODE-ABC');
+          document.finalize();
+          document.assignAccessCode('CODE-ABC');
 
           await repositories.documentRepository.save(document);
 

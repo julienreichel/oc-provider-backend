@@ -23,7 +23,7 @@ export class Document {
     this.validate();
   }
 
-  finalize(accessCode: string): void {
+  finalize(): void {
     if (this.status === 'final') {
       throw new InvalidDocumentStateError('Document is already finalized');
     }
@@ -32,12 +32,22 @@ export class Document {
       throw new InvalidDocumentStateError('Document content cannot be empty');
     }
 
+    this.status = 'final';
+    this.validate();
+  }
+
+  assignAccessCode(accessCode: string): void {
+    if (this.status !== 'final') {
+      throw new InvalidDocumentStateError(
+        'Access code can only be assigned to finalized documents',
+      );
+    }
+
     const normalizedAccessCode = accessCode?.trim();
     if (!normalizedAccessCode) {
       throw new InvalidDocumentStateError('Access code cannot be empty');
     }
 
-    this.status = 'final';
     this.accessCode = normalizedAccessCode;
     this.validate();
   }
@@ -67,13 +77,11 @@ export class Document {
       );
     }
 
-    if (this.status === 'final') {
-      if (!this.accessCode || this.accessCode.trim() === '') {
-        throw new InvalidDocumentStateError(
-          'Finalized documents require an access code',
-        );
-      }
-    } else if (this.accessCode) {
+    if (this.accessCode && this.accessCode.trim() === '') {
+      throw new InvalidDocumentStateError('Access code cannot be empty');
+    }
+
+    if (this.accessCode && this.status !== 'final') {
       throw new InvalidDocumentStateError(
         'Access code can only be set when document is final',
       );
