@@ -1,3 +1,5 @@
+import { InvalidDocumentStateError } from '../errors/errors';
+
 export type DocumentStatus = 'draft' | 'final';
 
 export class Document {
@@ -23,16 +25,16 @@ export class Document {
 
   finalize(accessCode: string): void {
     if (this.status === 'final') {
-      throw new Error('Document is already finalized');
+      throw new InvalidDocumentStateError('Document is already finalized');
     }
 
     if (!this.content || this.content.trim() === '') {
-      throw new Error('Document content cannot be empty');
+      throw new InvalidDocumentStateError('Document content cannot be empty');
     }
 
     const normalizedAccessCode = accessCode?.trim();
     if (!normalizedAccessCode) {
-      throw new Error('Access code cannot be empty');
+      throw new InvalidDocumentStateError('Access code cannot be empty');
     }
 
     this.status = 'final';
@@ -42,31 +44,39 @@ export class Document {
 
   private validate(): void {
     if (!this.id || this.id.trim() === '') {
-      throw new Error('Document id cannot be empty');
+      throw new InvalidDocumentStateError('Document id cannot be empty');
     }
 
     if (!this.title || this.title.trim() === '') {
-      throw new Error('Document title cannot be empty');
+      throw new InvalidDocumentStateError('Document title cannot be empty');
     }
 
     if (!this.content || this.content.trim() === '') {
-      throw new Error('Document content cannot be empty');
+      throw new InvalidDocumentStateError('Document content cannot be empty');
     }
 
     if (!(this.createdAt instanceof Date) || isNaN(this.createdAt.getTime())) {
-      throw new Error('Document createdAt must be a valid date');
+      throw new InvalidDocumentStateError(
+        'Document createdAt must be a valid date',
+      );
     }
 
     if (this.status !== 'draft' && this.status !== 'final') {
-      throw new Error('Document status must be draft or final');
+      throw new InvalidDocumentStateError(
+        'Document status must be draft or final',
+      );
     }
 
     if (this.status === 'final') {
       if (!this.accessCode || this.accessCode.trim() === '') {
-        throw new Error('Finalized documents require an access code');
+        throw new InvalidDocumentStateError(
+          'Finalized documents require an access code',
+        );
       }
     } else if (this.accessCode) {
-      throw new Error('Access code can only be set when document is final');
+      throw new InvalidDocumentStateError(
+        'Access code can only be set when document is final',
+      );
     }
   }
 

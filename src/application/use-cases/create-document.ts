@@ -2,6 +2,7 @@ import { Document } from '../../domain/entities/document';
 import type { DocumentRepository } from '../../domain/entities/repositories/document-repository';
 import type { Clock } from '../../domain/services/clock';
 import type { IdGenerator } from '../../domain/services/id-generator';
+import { InvalidDocumentStateError } from '../../domain/errors/errors';
 
 export interface CreateDocumentInput {
   title: string;
@@ -46,15 +47,15 @@ export class CreateDocumentUseCase {
 
   private validateInput(input: CreateDocumentInput): void {
     if (!input.title || input.title.trim() === '') {
-      throw new Error('Title cannot be empty');
+      throw new InvalidDocumentStateError('Title cannot be empty');
     }
 
     if (!input.content || input.content.trim() === '') {
-      throw new Error('Content cannot be empty');
+      throw new InvalidDocumentStateError('Content cannot be empty');
     }
 
     if (input.expiresIn !== undefined && input.expiresIn <= 0) {
-      throw new Error('Expiration time must be positive');
+      throw new InvalidDocumentStateError('Expiration time must be positive');
     }
   }
 }

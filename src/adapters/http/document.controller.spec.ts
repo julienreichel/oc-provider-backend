@@ -1,169 +1,143 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { DocumentController } from './document.controller';
 import { CreateDocumentUseCase } from '../../application/use-cases/create-document';
-import { DocumentRepository as DocumentRepositoryImpl } from '../../infrastructure/repositories/memory/document';
-import { FakeClock } from '../../infrastructure/testing/fake-clock';
-import { FakeIdGenerator } from '../../infrastructure/testing/fake-id-generator';
+import { GetDocumentUseCase } from '../../application/use-cases/get-document';
+import { UpdateDocumentUseCase } from '../../application/use-cases/update-document';
+import { ListDocumentsUseCase } from '../../application/use-cases/list-documents';
+import { DocumentOutput } from '../../application/use-cases/document-output';
+import { NotFoundError } from '../../domain/errors/errors';
 
-describe('DocumentController', () => {
+describe('DocumentController (HTTP)', () => {
   let app: INestApplication;
-  let documentRepository: DocumentRepositoryImpl;
-  let fakeClock: FakeClock;
-  let fakeIdGenerator: FakeIdGenerator;
+  let createDocumentUseCase: { execute: jest.Mock };
+  let getDocumentUseCase: { execute: jest.Mock };
+  let updateDocumentUseCase: { execute: jest.Mock };
+  let listDocumentsUseCase: { execute: jest.Mock };
+
+  const sampleDocument: DocumentOutput = {
+    id: 'doc-1',
+    title: 'Title',
+    content: 'Content',
+    status: 'draft',
+    accessCode: null,
+    createdAt: new Date('2025-01-01T10:00:00Z'),
+  };
 
   beforeEach(async () => {
-    // Create fresh instances for each test
-    documentRepository = new DocumentRepositoryImpl();
-    fakeClock = new FakeClock();
-    fakeIdGenerator = new FakeIdGenerator();
+    createDocumentUseCase = { execute: jest.fn() };
+    getDocumentUseCase = { execute: jest.fn() };
+    updateDocumentUseCase = { execute: jest.fn() };
+    listDocumentsUseCase = { execute: jest.fn() };
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [DocumentController],
       providers: [
-        {
-          provide: CreateDocumentUseCase,
-          useFactory: () =>
-            new CreateDocumentUseCase(
-              documentRepository,
-              fakeClock,
-              fakeIdGenerator,
-            ),
-        },
-        // Provide the interfaces (not used directly, but needed for DI)
-        { provide: 'DocumentRepository', useValue: documentRepository },
-        { provide: 'Clock', useValue: fakeClock },
-        { provide: 'IdGenerator', useValue: fakeIdGenerator },
+        { provide: CreateDocumentUseCase, useValue: createDocumentUseCase },
+        { provide: GetDocumentUseCase, useValue: getDocumentUseCase },
+        { provide: UpdateDocumentUseCase, useValue: updateDocumentUseCase },
+        { provide: ListDocumentsUseCase, useValue: listDocumentsUseCase },
       ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: false,
+      }),
+    );
     await app.init();
-
-    // Reset test utilities
-    documentRepository.clear();
-    fakeIdGenerator.reset();
-    fakeClock.setTime(new Date('2025-01-01T10:00:00.000Z'));
   });
 
   afterEach(async () => {
     await app.close();
   });
 
-  describe('POST /documents', () => {
-    it('should create document and return valid payload', async () => {
-      // Given
-      const validPayload = {
-        title: 'Test Document',
-        content: 'This is test content',
-      };
+  it('POST /documents returns 201 with id', async () => {
+    createDocumentUseCase.execute.mockResolvedValue({ id: 'doc-123' });
 
-      // When
-      const response = await request(app.getHttpServer())
-        .post('/documents')
-        .send(validPayload)
-        .expect(201);
+    const response = await request(app.getHttpServer())
+      .post('/documents')
+      .send({ title: 'Doc', content: 'Content' })
+      .expect(201);
 
-      // Then
-      expect(response.body).toEqual({
-        id: 'test-id-001',
-      });
+    expect(response.body).toEqual({ id: 'doc-123' });
+  });
 
-      // Verify document was persisted
-      const documents = await documentRepository.findAll();
-      expect(documents).toHaveLength(1);
-      expect(documents[0].title).toBe('Test Document');
-      expect(documents[0].content).toBe('This is test content');
+  it('POST /documents validates payload', async () => {
+    await request(app.getHttpServer())
+      .post('/documents')
+      .send({ title: '', content: '' })
+      .expect(400);
+  });
+
+  it('PUT /documents/:id updates document', async () => {
+    updateDocumentUseCase.execute.mockResolvedValue({
+      ...sampleDocument,
+      title: 'Updated',
     });
 
-    it('should create document with expiration and return', async () => {
-      // Given
-      const validPayload = {
-        title: 'Expiring Document',
-        content: 'Content with expiration',
-        expiresIn: 3600, // 1 hour
-      };
+    const response = await request(app.getHttpServer())
+      .put('/documents/doc-1')
+      .send({ title: 'Updated' })
+      .expect(200);
 
-      // When
-      const response = await request(app.getHttpServer())
-        .post('/documents')
-        .send(validPayload)
-        .expect(201);
+    expect(response.body.title).toBe('Updated');
+  });
 
-      // Then
-      expect(response.body).toEqual({
-        id: 'test-id-001',
-      });
+  it('PUT /documents/:id returns 404 when not found', async () => {
+    updateDocumentUseCase.execute.mockRejectedValue(
+      new NotFoundError('missing'),
+    );
+
+    await request(app.getHttpServer())
+      .put('/documents/doc-1')
+      .send({ title: 'Updated' })
+      .expect(404);
+  });
+
+  it('PUT /documents/:id validates payload', async () => {
+    await request(app.getHttpServer())
+      .put('/documents/doc-1')
+      .send({ title: '' })
+      .expect(400);
+  });
+
+  it('GET /documents/:id returns document', async () => {
+    getDocumentUseCase.execute.mockResolvedValue(sampleDocument);
+
+    const response = await request(app.getHttpServer())
+      .get('/documents/doc-1')
+      .expect(200);
+
+    expect(response.body.id).toBe('doc-1');
+  });
+
+  it('GET /documents/:id returns 404 when missing', async () => {
+    getDocumentUseCase.execute.mockRejectedValue(new NotFoundError('missing'));
+
+    await request(app.getHttpServer()).get('/documents/doc-1').expect(404);
+  });
+
+  it('GET /documents lists paginated results', async () => {
+    listDocumentsUseCase.execute.mockResolvedValue({
+      items: [sampleDocument],
+      nextCursor: 'cursor-123',
     });
 
-    describe('Validation errors (400)', () => {
-      it('should return 400 for missing title', async () => {
-        // Given
-        const invalidPayload = {
-          content: 'Content without title',
-        };
+    const response = await request(app.getHttpServer())
+      .get('/documents')
+      .query({ limit: 10 })
+      .expect(200);
 
-        // When
-        const response = await request(app.getHttpServer())
-          .post('/documents')
-          .send(invalidPayload)
-          .expect(400);
-
-        // Then
-        expect(response.body.message).toContain('title should not be empty');
-      });
-
-      it('should return 400 for empty title', async () => {
-        // Given
-        const invalidPayload = {
-          title: '',
-          content: 'Valid content',
-        };
-
-        // When
-        const response = await request(app.getHttpServer())
-          .post('/documents')
-          .send(invalidPayload)
-          .expect(400);
-
-        // Then
-        expect(response.body.message).toContain('title should not be empty');
-      });
-
-      it('should return 400 for missing content', async () => {
-        // Given
-        const invalidPayload = {
-          title: 'Valid title',
-        };
-
-        // When
-        const response = await request(app.getHttpServer())
-          .post('/documents')
-          .send(invalidPayload)
-          .expect(400);
-
-        // Then
-        expect(response.body.message).toContain('content should not be empty');
-      });
-
-      it('should return 400 for empty content', async () => {
-        // Given
-        const invalidPayload = {
-          title: 'Valid title',
-          content: '',
-        };
-
-        // When
-        const response = await request(app.getHttpServer())
-          .post('/documents')
-          .send(invalidPayload)
-          .expect(400);
-
-        // Then
-        expect(response.body.message).toContain('content should not be empty');
-      });
+    expect(response.body.items).toHaveLength(1);
+    expect(response.body.nextCursor).toBe('cursor-123');
+    expect(listDocumentsUseCase.execute).toHaveBeenCalledWith({
+      cursor: undefined,
+      limit: 10,
     });
   });
 });

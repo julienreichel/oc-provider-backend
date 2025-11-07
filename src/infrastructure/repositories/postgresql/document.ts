@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { Document } from '../../../domain/entities/document';
-import { DocumentRepository } from '../../../domain/entities/repositories/document-repository';
+import {
+  DocumentRepository,
+  ListDocumentsParams,
+  PaginatedDocuments,
+} from '../../../domain/entities/repositories/document-repository';
 import { PrismaService } from '../../services/prisma.service';
+import { decodeCursor, encodeCursor } from '../pagination-cursor';
 
 @Injectable()
 export class PostgreSQLDocumentRepository implements DocumentRepository {
@@ -74,5 +80,59 @@ export class PostgreSQLDocumentRepository implements DocumentRepository {
 
   async clear(): Promise<void> {
     await this.prisma.document.deleteMany({});
+  }
+
+  async findPaginated({
+    cursor,
+    limit,
+  }: ListDocumentsParams): Promise<PaginatedDocuments> {
+    let where: Prisma.DocumentWhereInput | undefined;
+
+    if (cursor) {
+      const payload = decodeCursor(cursor);
+      where = {
+        OR: [
+          { createdAt: { lt: payload.createdAt } },
+          {
+            createdAt: payload.createdAt,
+            id: { lt: payload.id },
+          },
+        ],
+      };
+    }
+
+    const records = await this.prisma.document.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+    });
+
+    const hasNext = records.length > limit;
+    const items = records
+      .slice(0, limit)
+      .map(
+        (record) =>
+          new Document(
+            record.id,
+            record.title,
+            record.content,
+            record.createdAt,
+            record.status,
+            record.accessCode,
+          ),
+      );
+
+    const nextCursor =
+      hasNext && records[limit]
+        ? encodeCursor({
+            id: records[limit].id,
+            createdAt: records[limit].createdAt,
+          })
+        : undefined;
+
+    return {
+      items,
+      nextCursor,
+    };
   }
 }

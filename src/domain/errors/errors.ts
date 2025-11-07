@@ -11,3 +11,10 @@ export class AccessCodeExpiredError extends Error {
     this.name = 'AccessCodeExpiredError';
   }
 }
+
+export class InvalidDocumentStateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidDocumentStateError';
+  }
+}
