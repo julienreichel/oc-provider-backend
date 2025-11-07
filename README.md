@@ -103,7 +103,7 @@ The project includes comprehensive testing at multiple levels:
 
 - **Unit Tests** (`npm test`): Fast, isolated tests with no external dependencies
 - **Integration Tests** (`npm run test:integration`): Test database interactions with real PostgreSQL
-- **E2E Tests** (`npm run test:e2e`): End-to-end testing of complete API flows
+- **E2E Tests** (`npm run test:e2e`): End-to-end testing of complete API flows (in-memory repository by default; run `E2E_MODE=prisma npm run test:e2e` to exercise the Prisma adapter against a real PostgreSQL instance after `npm run db:migrate`)
 
 ### Local Testing Setup
 

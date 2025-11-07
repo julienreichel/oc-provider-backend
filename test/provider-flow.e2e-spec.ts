@@ -18,8 +18,8 @@ describe('Provider Flow (e2e)', () => {
     clientGatewayMock = getClientGatewayMock();
   });
 
-  afterEach(() => {
-    resetAppState();
+  afterEach(async () => {
+    await resetAppState();
   });
 
   afterAll(async () => {
