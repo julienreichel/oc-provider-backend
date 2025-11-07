@@ -22,8 +22,8 @@ spec:
           env:
             - name: NODE_ENV
               value: production
-            - name: CLIENT_BASE_URL
-              value: CLIENT_BASE_URL_PLACEHOLDER
           envFrom:
             - secretRef:
                 name: db
+            - secretRef:
+                name: config
