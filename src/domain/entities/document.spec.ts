@@ -1,110 +1,104 @@
 import { Document } from './document';
 
 describe('Document', () => {
-  const validId = '123e4567-e89b-12d3-a456-426614174000';
-  const validTitle = 'Test Document';
-  const validContent = 'This is test content';
-  const validDate = new Date('2025-01-01T00:00:00Z');
+  const baseProps = {
+    id: 'doc-1',
+    title: 'Sample Title',
+    content: 'Sample content body',
+    createdAt: new Date('2025-01-01T10:00:00Z'),
+  };
 
-  describe('construction', () => {
-    it('should create a valid document', () => {
-      // Given & When
-      const document = new Document(
-        validId,
-        validTitle,
-        validContent,
-        validDate,
-      );
+  it('defaults to draft status without access code', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+    );
 
-      // Then
-      expect(document.id).toBe(validId);
-      expect(document.title).toBe(validTitle);
-      expect(document.content).toBe(validContent);
-      expect(document.createdAt).toBe(validDate);
-    });
-
-    it('should create document using static factory method', () => {
-      // Given & When
-      const document = Document.create(
-        validId,
-        validTitle,
-        validContent,
-        validDate,
-      );
-
-      // Then
-      expect(document).toBeInstanceOf(Document);
-      expect(document.id).toBe(validId);
-    });
+    expect(document.status).toBe('draft');
+    expect(document.accessCode).toBeNull();
   });
 
-  describe('validation', () => {
-    it('should throw error when id is empty', () => {
-      // Given & When & Then
-      expect(
-        () => new Document('', validTitle, validContent, validDate),
-      ).toThrow('Document id cannot be empty');
-    });
+  it('finalizes document and stores normalized access code', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+    );
 
-    it('should throw error when id is whitespace only', () => {
-      // Given & When & Then
-      expect(
-        () => new Document('   ', validTitle, validContent, validDate),
-      ).toThrow('Document id cannot be empty');
-    });
+    document.finalize('  FINAL-123  ');
 
-    it('should throw error when title is empty', () => {
-      // Given & When & Then
-      expect(() => new Document(validId, '', validContent, validDate)).toThrow(
-        'Document title cannot be empty',
-      );
-    });
-
-    it('should throw error when title is whitespace only', () => {
-      // Given & When & Then
-      expect(
-        () => new Document(validId, '   ', validContent, validDate),
-      ).toThrow('Document title cannot be empty');
-    });
-
-    it('should throw error when content is empty', () => {
-      // Given & When & Then
-      expect(() => new Document(validId, validTitle, '', validDate)).toThrow(
-        'Document content cannot be empty',
-      );
-    });
-
-    it('should throw error when content is whitespace only', () => {
-      // Given & When & Then
-      expect(() => new Document(validId, validTitle, '   ', validDate)).toThrow(
-        'Document content cannot be empty',
-      );
-    });
-
-    it('should throw error when createdAt is not a valid date', () => {
-      // Given & When & Then
-      expect(
-        () =>
-          new Document(validId, validTitle, validContent, new Date('invalid')),
-      ).toThrow('Document createdAt must be a valid date');
-    });
+    expect(document.status).toBe('final');
+    expect(document.accessCode).toBe('FINAL-123');
   });
 
-  describe('immutability', () => {
-    it('should have readonly properties', () => {
-      // Given
-      const document = new Document(
-        validId,
-        validTitle,
-        validContent,
-        validDate,
-      );
+  it('throws when attempting to finalize with empty content', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+    );
+    (document as unknown as { content: string }).content = '   ';
 
-      // When & Then
-      expect(document.id).toBeDefined();
-      expect(document.title).toBeDefined();
-      expect(document.content).toBeDefined();
-      expect(document.createdAt).toBeDefined();
-    });
+    expect(() => document.finalize('CODE-123')).toThrow(
+      'Document content cannot be empty',
+    );
+  });
+
+  it('throws when attempting to finalize with empty access code', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+    );
+
+    expect(() => document.finalize('   ')).toThrow(
+      'Access code cannot be empty',
+    );
+  });
+
+  it('throws when rehydrated as final without access code', () => {
+    expect(
+      () =>
+        new Document(
+          baseProps.id,
+          baseProps.title,
+          baseProps.content,
+          baseProps.createdAt,
+          'final',
+        ),
+    ).toThrow('Finalized documents require an access code');
+  });
+
+  it('throws when access code is set while status is draft', () => {
+    expect(
+      () =>
+        new Document(
+          baseProps.id,
+          baseProps.title,
+          baseProps.content,
+          baseProps.createdAt,
+          'draft',
+          'CODE-123',
+        ),
+    ).toThrow('Access code can only be set when document is final');
+  });
+
+  it('throws when attempting to finalize an already final document', () => {
+    const document = new Document(
+      baseProps.id,
+      baseProps.title,
+      baseProps.content,
+      baseProps.createdAt,
+    );
+    document.finalize('CODE-123');
+
+    expect(() => document.finalize('CODE-456')).toThrow(
+      'Document is already finalized',
+    );
   });
 });

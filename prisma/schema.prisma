@@ -5,16 +5,23 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum DocumentStatus {
+  draft
+  final
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Document {
-  id        String   @id @db.VarChar(255)
-  title     String   @db.VarChar(500)
-  content   String   @db.Text
-  createdAt DateTime @map("created_at") @db.Timestamptz
+  id         String         @id @db.VarChar(255)
+  title      String         @db.VarChar(500)
+  content    String         @db.Text
+  status     DocumentStatus @default(draft)
+  accessCode String?        @map("access_code") @db.VarChar(255)
+  createdAt  DateTime       @map("created_at") @db.Timestamptz
 
   @@map("documents")
 }

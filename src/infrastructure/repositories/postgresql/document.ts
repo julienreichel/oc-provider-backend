@@ -13,12 +13,16 @@ export class PostgreSQLDocumentRepository implements DocumentRepository {
       update: {
         title: document.title,
         content: document.content,
+        status: document.status,
+        accessCode: document.accessCode,
         createdAt: document.createdAt,
       },
       create: {
         id: document.id,
         title: document.title,
         content: document.content,
+        status: document.status,
+        accessCode: document.accessCode,
         createdAt: document.createdAt,
       },
     });
@@ -39,6 +43,8 @@ export class PostgreSQLDocumentRepository implements DocumentRepository {
       record.title,
       record.content,
       record.createdAt,
+      record.status,
+      record.accessCode,
     );
   }
 
@@ -49,7 +55,14 @@ export class PostgreSQLDocumentRepository implements DocumentRepository {
 
     return records.map(
       (record) =>
-        new Document(record.id, record.title, record.content, record.createdAt),
+        new Document(
+          record.id,
+          record.title,
+          record.content,
+          record.createdAt,
+          record.status,
+          record.accessCode,
+        ),
     );
   }
 
