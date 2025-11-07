@@ -85,6 +85,56 @@ describe('Repository Factory (Switching)', () => {
           expect(all.map((d) => d.id)).toContain('doc-1');
           expect(all.map((d) => d.id)).toContain('doc-2');
         });
+
+        it('should persist status and access code', async () => {
+          const document = new Document(
+            'doc-final',
+            'Final doc',
+            'Content',
+            new Date('2025-01-01T12:00:00.000Z'),
+          );
+          document.finalize('CODE-ABC');
+
+          await repositories.documentRepository.save(document);
+
+          const retrieved =
+            await repositories.documentRepository.findById('doc-final');
+
+          expect(retrieved?.status).toBe('final');
+          expect(retrieved?.accessCode).toBe('CODE-ABC');
+        });
+
+        it('should paginate documents with findPaginated', async () => {
+          const dates = [
+            new Date('2025-01-01T09:00:00.000Z'),
+            new Date('2025-01-01T10:00:00.000Z'),
+            new Date('2025-01-01T11:00:00.000Z'),
+          ];
+
+          for (let i = 0; i < dates.length; i++) {
+            await repositories.documentRepository.save(
+              new Document(`doc-${i}`, `Title ${i}`, `Content ${i}`, dates[i]),
+            );
+          }
+
+          const firstPage = await repositories.documentRepository.findPaginated(
+            {
+              limit: 2,
+            },
+          );
+
+          expect(firstPage.items).toHaveLength(2);
+          expect(firstPage.nextCursor).toBeDefined();
+
+          const secondPage =
+            await repositories.documentRepository.findPaginated({
+              limit: 2,
+              cursor: firstPage.nextCursor,
+            });
+
+          expect(secondPage.items).toHaveLength(1);
+          expect(secondPage.nextCursor).toBeUndefined();
+        });
       });
     });
   });

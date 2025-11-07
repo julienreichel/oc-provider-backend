@@ -108,25 +108,24 @@ export class PostgreSQLDocumentRepository implements DocumentRepository {
     });
 
     const hasNext = records.length > limit;
-    const items = records
-      .slice(0, limit)
-      .map(
-        (record) =>
-          new Document(
-            record.id,
-            record.title,
-            record.content,
-            record.createdAt,
-            record.status,
-            record.accessCode,
-          ),
-      );
+    const pageRecords = records.slice(0, limit);
+    const items = pageRecords.map(
+      (record) =>
+        new Document(
+          record.id,
+          record.title,
+          record.content,
+          record.createdAt,
+          record.status,
+          record.accessCode,
+        ),
+    );
 
     const nextCursor =
-      hasNext && records[limit]
+      hasNext && pageRecords.length > 0
         ? encodeCursor({
-            id: records[limit].id,
-            createdAt: records[limit].createdAt,
+            id: pageRecords[pageRecords.length - 1].id,
+            createdAt: pageRecords[pageRecords.length - 1].createdAt,
           })
         : undefined;
 

@@ -63,6 +63,24 @@ describeIntegration('PostgreSQLDocumentRepository (Integration)', () => {
       expect(found!.createdAt).toEqual(new Date('2025-01-01T10:00:00.000Z'));
     });
 
+    it('should persist status and access code', async () => {
+      const document = new Document(
+        'doc-final',
+        'Final Document',
+        'Final content',
+        new Date('2025-01-01T15:00:00.000Z'),
+      );
+      document.finalize('CODE-999');
+
+      await repository.save(document);
+
+      const found = await repository.findById('doc-final');
+
+      expect(found).not.toBeNull();
+      expect(found!.status).toBe('final');
+      expect(found!.accessCode).toBe('CODE-999');
+    });
+
     it('should return null for non-existent document', async () => {
       // When
       const found = await repository.findById('non-existent');
@@ -142,6 +160,51 @@ describeIntegration('PostgreSQLDocumentRepository (Integration)', () => {
       expect(documents[0].id).toBe('doc-2'); // Most recent first
       expect(documents[1].id).toBe('doc-3');
       expect(documents[2].id).toBe('doc-1'); // Oldest last
+    });
+  });
+
+  describe('findPaginated', () => {
+    it('should return paginated results with next cursor', async () => {
+      const documents = [
+        new Document(
+          'doc-a',
+          'Doc A',
+          'Content A',
+          new Date('2025-01-01T10:00:00.000Z'),
+        ),
+        new Document(
+          'doc-b',
+          'Doc B',
+          'Content B',
+          new Date('2025-01-01T11:00:00.000Z'),
+        ),
+        new Document(
+          'doc-c',
+          'Doc C',
+          'Content C',
+          new Date('2025-01-01T12:00:00.000Z'),
+        ),
+      ];
+
+      for (const doc of documents) {
+        await repository.save(doc);
+      }
+
+      const firstPage = await repository.findPaginated({ limit: 2 });
+
+      expect(firstPage.items).toHaveLength(2);
+      expect(firstPage.items[0].id).toBe('doc-c');
+      expect(firstPage.items[1].id).toBe('doc-b');
+      expect(firstPage.nextCursor).toBeDefined();
+
+      const secondPage = await repository.findPaginated({
+        limit: 2,
+        cursor: firstPage.nextCursor,
+      });
+
+      expect(secondPage.items).toHaveLength(1);
+      expect(secondPage.items[0].id).toBe('doc-a');
+      expect(secondPage.nextCursor).toBeUndefined();
     });
   });
 

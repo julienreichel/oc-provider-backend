@@ -44,14 +44,15 @@ export class DocumentRepository implements DocumentRepositoryInterface {
       );
     }
 
-    const items = filtered.slice(0, limit);
     const hasNext = filtered.length > limit;
-    const nextCursor = hasNext
-      ? encodeCursor({
-          id: filtered[limit].id,
-          createdAt: filtered[limit].createdAt,
-        })
-      : undefined;
+    const items = filtered.slice(0, limit);
+    const nextCursor =
+      hasNext && items.length > 0
+        ? encodeCursor({
+            id: items[items.length - 1].id,
+            createdAt: items[items.length - 1].createdAt,
+          })
+        : undefined;
 
     return Promise.resolve({ items, nextCursor });
   }
