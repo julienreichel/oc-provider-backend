@@ -66,5 +66,11 @@ export class ConfigService {
         'Client backend base URL not configured - send flow will be disabled',
       );
     }
+
+    if (this.config.hasClientBaseUrl()) {
+      this.logger.log(
+        `Client backend base URL configured: ${this.config.CLIENT_BASE_URL}`,
+      );
+    }
   }
 }
