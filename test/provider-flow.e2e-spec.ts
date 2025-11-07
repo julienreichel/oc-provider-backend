@@ -19,7 +19,7 @@ describe('Provider Flow (e2e)', () => {
   });
 
   afterEach(async () => {
-    await resetAppState();
+    await resetAppState(app);
   });
 
   afterAll(async () => {

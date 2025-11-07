@@ -16,7 +16,7 @@ describe('Health (e2e)', () => {
   });
 
   afterEach(async () => {
-    await resetAppState();
+    await resetAppState(app);
   });
 
   afterAll(async () => {
